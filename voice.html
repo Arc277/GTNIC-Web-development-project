@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Input - Hackathon App</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .voice-container {
+      max-width: 600px;
+      margin: 3rem auto;
+      padding: 0 1rem;
+      text-align: center;
+    }
+
+    .voice-container h1 {
+      margin-bottom: 0.5rem;
+    }
+
+    .voice-container p.subtitle {
+      color: #64748b;
+      margin-bottom: 2rem;
+    }
+
+    /* ── Language toggle ── */
+    .lang-toggle {
+      display: inline-flex;
+      background: #f1f5f9;
+      border-radius: 999px;
+      padding: 4px;
+      margin-bottom: 1.5rem;
+      gap: 0;
+    }
+
+    .lang-toggle button {
+      background: transparent;
+      border: none;
+      padding: 0.45rem 1.1rem;
+      font-size: 0.85rem;
+      border-radius: 999px;
+      cursor: pointer;
+      color: #64748b;
+      font-weight: 500;
+      transition: all 0.25s;
+    }
+
+    .lang-toggle button.active {
+      background: #2563eb;
+      color: white;
+      box-shadow: 0 1px 4px rgba(37,99,235,0.3);
+    }
+
+    .lang-toggle button:hover:not(.active) {
+      color: #0f172a;
+    }
+
+    /* ── Input area ── */
+    .input-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    /* ── Mic button ── */
+    #mic-btn {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      font-size: 2.5rem;
+      cursor: pointer;
+      transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      flex-shrink: 0;
+    }
+
+    #mic-btn:hover {
+      background-color: #1d4ed8;
+      transform: scale(1.05);
+    }
+
+    #mic-btn.listening {
+      background-color: #dc2626;
+      box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5);
+      animation: pulse 1.5s infinite;
+    }
+
+    #mic-btn.disabled {
+      background-color: #94a3b8;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    #mic-btn.disabled:hover {
+      transform: none;
+      background-color: #94a3b8;
+    }
+
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); }
+      70%  { box-shadow: 0 0 0 20px rgba(220, 38, 38, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+    }
+
+    /* ── Type button ── */
+    #type-toggle-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background-color: #f1f5f9;
+      color: #475569;
+      border: 2px solid #e2e8f0;
+      font-size: 1.25rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s;
+      flex-shrink: 0;
+    }
+
+    #type-toggle-btn:hover {
+      background-color: #e2e8f0;
+      border-color: #cbd5e1;
+      transform: scale(1.08);
+    }
+
+    #type-toggle-btn.active {
+      background-color: #2563eb;
+      color: white;
+      border-color: #2563eb;
+    }
+
+    #status {
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      color: #64748b;
+      min-height: 1.5rem;
+    }
+
+    /* ── Text input area (toggled) ── */
+    .text-input-area {
+      margin-top: 1rem;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.35s ease, opacity 0.25s ease, margin 0.3s ease;
+    }
+
+    .text-input-area.open {
+      max-height: 80px;
+      opacity: 1;
+      margin-top: 1.25rem;
+    }
+
+    .text-input-wrapper {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    #fallback-input {
+      flex: 1;
+      max-width: 380px;
+      padding: 0.65rem 1rem;
+      font-size: 0.95rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+
+    #fallback-input:focus {
+      border-color: #2563eb;
+    }
+
+    #fallback-submit {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 0.65rem 1.1rem;
+      font-size: 0.95rem;
+      border-radius: 10px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    #fallback-submit:hover {
+      background-color: #1d4ed8;
+    }
+
+    /* ── Output box ── */
+    .output-box {
+      margin-top: 2rem;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      min-height: 60px;
+      text-align: left;
+      transition: border-color 0.3s;
+    }
+
+    .output-box.active {
+      border-color: #2563eb;
+    }
+
+    .output-box h3 {
+      margin: 0 0 0.75rem 0;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+    }
+
+    #output-text {
+      font-size: 1.25rem;
+      color: #0f172a;
+      word-wrap: break-word;
+      line-height: 1.6;
+    }
+
+    #output-text .interim {
+      color: #94a3b8;
+    }
+
+    /* ── History ── */
+    .history-section {
+      margin-top: 2rem;
+      text-align: left;
+    }
+
+    .history-section h3 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      margin-bottom: 0.75rem;
+    }
+
+    .history-item {
+      background: #f1f5f9;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+      color: #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-item .tag {
+      font-size: 0.65rem;
+      background: #e0e7ff;
+      color: #3730a3;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+      text-transform: uppercase;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .history-item .tag.typed {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .history-item .left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 0;
+    }
+
+    .history-item .left span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item .timestamp {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      white-space: nowrap;
+      margin-left: 1rem;
+      flex-shrink: 0;
+    }
+
+    #clear-btn {
+      background-color: #e2e8f0;
+      color: #475569;
+      font-size: 0.85rem;
+      padding: 0.5rem 1rem;
+      margin-top: 1rem;
+    }
+
+    #clear-btn:hover {
+      background-color: #cbd5e1;
+    }
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    nav a {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <h2>My App</h2>
+      <a href="index.html">&larr; Back to Home</a>
+    </nav>
+  </header>
+
+  <div class="voice-container">
+    <h1>&#127908; Voice Input</h1>
+    <p class="subtitle">Speak or type &mdash; your words will appear below.</p>
+
+    <!-- Language toggle -->
+    <div class="lang-toggle">
+      <button id="lang-en" class="active">&#127468;&#127463; English</button>
+      <button id="lang-id">&#127470;&#127465; Indonesian</button>
+    </div>
+
+    <!-- Mic + type button side by side -->
+    <div class="input-area">
+      <button id="mic-btn" title="Click to start listening">&#127897;&#65039;</button>
+      <button id="type-toggle-btn" title="Type instead">&#9000;&#65039;</button>
+    </div>
+
+    <div id="status">Click the microphone to start</div>
+
+    <!-- Collapsible text input -->
+    <div class="text-input-area" id="text-input-area">
+      <div class="text-input-wrapper">
+        <input type="text" id="fallback-input" placeholder="Type what you'd say..." autocomplete="off">
+        <button id="fallback-submit">Send</button>
+      </div>
+    </div>
+
+    <!-- Output -->
+    <div class="output-box" id="output-box">
+      <h3>Detected Speech</h3>
+      <div id="output-text">Your words will appear here...</div>
+    </div>
+
+    <!-- History -->
+    <div class="history-section" id="history-section" style="display: none;">
+      <h3>History</h3>
+      <div id="history-list"></div>
+      <button id="clear-btn">Clear History</button>
+    </div>
+  </div>
+
+  <script>
+    // ── DOM refs ──
+    var micBtn         = document.getElementById("mic-btn");
+    var typeToggleBtn  = document.getElementById("type-toggle-btn");
+    var statusEl       = document.getElementById("status");
+    var outputText     = document.getElementById("output-text");
+    var outputBox      = document.getElementById("output-box");
+    var historySection = document.getElementById("history-section");
+    var historyList    = document.getElementById("history-list");
+    var clearBtn       = document.getElementById("clear-btn");
+    var textInputArea  = document.getElementById("text-input-area");
+    var fallbackInput  = document.getElementById("fallback-input");
+    var fallbackSubmit = document.getElementById("fallback-submit");
+    var langEnBtn      = document.getElementById("lang-en");
+    var langIdBtn      = document.getElementById("lang-id");
+
+    // ── State ──
+    var currentLang = "en-US";
+    var isListening = false;
+    var textInputOpen = false;
+
+    // ── Speech API detection ──
+    var SpeechRecognition = window.SpeechRecognition
+                         || window.webkitSpeechRecognition
+                         || window.mozSpeechRecognition
+                         || window.msSpeechRecognition
+                         || null;
+
+    var speechSupported = !!SpeechRecognition;
+    var recognition = null;
+
+    // If no speech support, disable mic and auto-open text input
+    if (!speechSupported) {
+      micBtn.classList.add("disabled");
+      micBtn.title = "Voice not supported in this browser";
+      statusEl.textContent = "Voice not supported \u2014 type below instead";
+      textInputOpen = true;
+      textInputArea.classList.add("open");
+      typeToggleBtn.classList.add("active");
+    }
+
+    // ── Language toggle ──
+    function setLang(lang) {
+      currentLang = lang;
+      if (lang === "en-US") {
+        langEnBtn.classList.add("active");
+        langIdBtn.classList.remove("active");
+        fallbackInput.placeholder = "Type what you'd say...";
+      } else {
+        langIdBtn.classList.add("active");
+        langEnBtn.classList.remove("active");
+        fallbackInput.placeholder = "Ketik apa yang ingin kamu katakan...";
+      }
+      // Update recognition lang if active
+      if (recognition) {
+        recognition.lang = currentLang;
+      }
+    }
+
+    langEnBtn.addEventListener("click", function() { setLang("en-US"); });
+    langIdBtn.addEventListener("click", function() { setLang("id-ID"); });
+
+    // ── Type toggle button ──
+    typeToggleBtn.addEventListener("click", function() {
+      textInputOpen = !textInputOpen;
+      if (textInputOpen) {
+        textInputArea.classList.add("open");
+        typeToggleBtn.classList.add("active");
+        setTimeout(function() { fallbackInput.focus(); }, 300);
+      } else {
+        textInputArea.classList.remove("open");
+        typeToggleBtn.classList.remove("active");
+      }
+    });
+
+    // ══════════════════════════════════
+    //  Voice recognition
+    // ══════════════════════════════════
+    if (speechSupported) {
+      function createRecognition() {
+        var rec = new SpeechRecognition();
+        rec.lang = currentLang;
+        rec.continuous = false;
+
+        try {
+          rec.interimResults = true;
+        } catch (e) {
+          rec.interimResults = false;
+        }
+
+        rec.addEventListener("start", function() {
+          isListening = true;
+          micBtn.classList.add("listening");
+          statusEl.textContent = "\uD83D\uDD34 Listening... speak now!";
+          outputBox.classList.add("active");
+          outputText.textContent = "";
+        });
+
+        rec.addEventListener("result", function(event) {
+          var finalTranscript = "";
+          var interimTranscript = "";
+
+          for (var i = event.resultIndex; i < event.results.length; i++) {
+            var transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript;
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+
+          outputText.innerHTML = "";
+          if (finalTranscript) {
+            outputText.innerHTML += finalTranscript;
+          }
+          if (interimTranscript) {
+            outputText.innerHTML += '<span class="interim">' + interimTranscript + '</span>';
+          }
+        });
+
+        rec.addEventListener("end", function() {
+          isListening = false;
+          micBtn.classList.remove("listening");
+          statusEl.textContent = "Click the microphone to start";
+          outputBox.classList.remove("active");
+
+          var text = outputText.textContent.trim();
+          if (text && text !== "Your words will appear here...") {
+            addToHistory(text, "voice");
+          }
+        });
+
+        rec.addEventListener("error", function(event) {
+          isListening = false;
+          micBtn.classList.remove("listening");
+          outputBox.classList.remove("active");
+
+          if (event.error === "not-allowed" || event.error === "permission-denied") {
+            statusEl.textContent = "\u26A0\uFE0F Mic access denied. Allow mic permission and try again.";
+          } else if (event.error === "no-speech") {
+            statusEl.textContent = "No speech detected. Try again.";
+          } else if (event.error === "network") {
+            statusEl.textContent = "\u26A0\uFE0F Network error. Check your connection.";
+          } else if (event.error === "service-not-allowed" || event.error === "not-allowed") {
+            statusEl.textContent = "\u26A0\uFE0F Speech service unavailable. Use the keyboard instead.";
+            if (!textInputOpen) {
+              typeToggleBtn.click();
+            }
+          } else {
+            statusEl.textContent = "Error: " + event.error + ". Try again.";
+          }
+        });
+
+        return rec;
+      }
+
+      recognition = createRecognition();
+
+      micBtn.addEventListener("click", function() {
+        if (isListening) {
+          recognition.stop();
+        } else {
+          // Recreate to pick up latest language
+          recognition = createRecognition();
+          try {
+            recognition.start();
+          } catch (e) {
+            recognition.stop();
+          }
+        }
+      });
+    } else {
+      // Mic disabled click handler
+      micBtn.addEventListener("click", function() {
+        if (!textInputOpen) {
+          typeToggleBtn.click();
+        }
+        statusEl.textContent = "Voice not supported \u2014 type below instead";
+      });
+    }
+
+    // ══════════════════════════════════
+    //  Text input (all browsers)
+    // ══════════════════════════════════
+    function handleTextSubmit() {
+      var text = fallbackInput.value.trim();
+      if (!text) return;
+
+      outputText.textContent = text;
+      outputBox.classList.add("active");
+      addToHistory(text, "typed");
+      fallbackInput.value = "";
+
+      setTimeout(function() {
+        outputBox.classList.remove("active");
+      }, 1500);
+    }
+
+    fallbackSubmit.addEventListener("click", handleTextSubmit);
+
+    fallbackInput.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleTextSubmit();
+      }
+    });
+
+    // ══════════════════════════════════
+    //  History
+    // ══════════════════════════════════
+    function addToHistory(text, source) {
+      historySection.style.display = "block";
+
+      var item = document.createElement("div");
+      item.classList.add("history-item");
+
+      var now = new Date();
+      var hours = now.getHours();
+      var minutes = now.getMinutes();
+      var ampm = hours >= 12 ? "PM" : "AM";
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      var time = hours + ":" + (minutes < 10 ? "0" : "") + minutes + " " + ampm;
+
+      var tagClass = source === "typed" ? "tag typed" : "tag";
+      var tagLabel = source === "typed" ? "\u2328 typed" : "\uD83C\uDF99 voice";
+
+      item.innerHTML =
+        '<div class="left"><span>' + text + '</span><span class="' + tagClass + '">' + tagLabel + '</span></div>' +
+        '<span class="timestamp">' + time + '</span>';
+
+      historyList.insertBefore(item, historyList.firstChild);
+    }
+
+    clearBtn.addEventListener("click", function() {
+      historyList.innerHTML = "";
+      historySection.style.display = "none";
+    });
+  </script>
+</body>
+</html>
