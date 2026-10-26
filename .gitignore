@@ -1,0 +1,17 @@
+# Environment variables
+.env
+*.env
+voice-server/.env
+
+# Dependencies
+node_modules/
+voice-server/node_modules/
+
+# Uploads
+uploads/
+voice-server/uploads/
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+.vscode/
