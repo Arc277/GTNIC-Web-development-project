@@ -299,7 +299,7 @@
       background: #cbd5e1;
     }
   </style>
-  <script src="config.js" onerror="console.log('Running in production mode')"></script>
+  <script src="config.js" onerror="console.log('Running in production mode or config.js absent')"></script>
 </head>
 <body>
   <header>
@@ -311,7 +311,7 @@
 
   <main class="voice-container">
     <h1>🎙️ Voice Input</h1>
-    <p class="subtitle">Powered by Groq Whisper AI &bull; Enhanced Indonesian &amp; English</p>
+    <p class="subtitle">Powered by Groq Whisper AI &bull; Works locally &amp; on Vercel</p>
 
     <!-- Mode Badge -->
     <div class="mode-pill">
@@ -331,7 +331,7 @@
     <div class="btn-group">
       <button id="record-btn" title="Click to speak">🎙️</button>
       <button id="type-btn" title="Type text instead">⌨️</button>
-      <button id="key-settings-btn" title="Manage API Key (Development)">🔑</button>
+      <button id="key-settings-btn" title="Manage API Key">🔑</button>
     </div>
 
     <div id="status">Click the microphone to start speaking</div>
@@ -371,23 +371,23 @@
       /^\.+$/
     ];
 
-    let isServerlessAvailable = false;
+    // Detect if running locally (VS Code Live Server on localhost / 127.0.0.1) or deployed on Vercel
+    const isLocalLiveServer = window.location.hostname === "localhost" ||
+                              window.location.hostname === "127.0.0.1" ||
+                              window.location.protocol === "file:" ||
+                              window.location.port === "5500" ||
+                              window.location.port === "5501";
+
     const modeBadgeText = document.getElementById("mode-badge-text");
     const keySettingsBtn = document.getElementById("key-settings-btn");
 
-    async function checkServerlessBackend() {
-      try {
-        const res = await fetch("/api/transcribe", { method: "HEAD" });
-        if (res.status !== 404) {
-          isServerlessAvailable = true;
-          modeBadgeText.textContent = "Groq Whisper AI (Vercel Cloud)";
-          keySettingsBtn.style.display = "none";
-        }
-      } catch (err) {
-        isServerlessAvailable = false;
-      }
+    if (isLocalLiveServer) {
+      modeBadgeText.textContent = "Groq Whisper AI (Live Server Local)";
+      keySettingsBtn.style.display = "inline-flex";
+    } else {
+      modeBadgeText.textContent = "Groq Whisper AI (Vercel Cloud)";
+      keySettingsBtn.style.display = "none";
     }
-    checkServerlessBackend();
 
     function getLocalApiKey() {
       if (typeof CONFIG !== "undefined" && CONFIG.GROQ_API_KEY && !CONFIG.GROQ_API_KEY.includes("your_groq")) {
@@ -442,10 +442,10 @@
     // ── Key Settings Modal (Local Dev) ──
     keySettingsBtn.addEventListener("click", () => {
       const current = getLocalApiKey();
-      const entered = prompt("Enter your Groq API Key for local development (starts with gsk_):", current);
+      const entered = prompt("Enter your Groq API Key (starts with gsk_):", current);
       if (entered !== null) {
         localStorage.setItem("GROQ_API_KEY", entered.trim());
-        alert("API Key saved for local development!");
+        alert("API Key saved!");
       }
     });
 
@@ -504,7 +504,6 @@
       }
 
       try {
-        // High quality speech capture: enable browser noise suppression & auto gain
         audioStream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
@@ -568,34 +567,24 @@
 
           try {
             let recognizedText = "";
-            let serverlessSucceeded = false;
 
-            // Strategy 1: Vercel Cloud Serverless Function
-            try {
+            if (!isLocalLiveServer) {
+              // ── ON VERCEL (Production): Call /api/transcribe serverless endpoint ──
               const res = await fetch("/api/transcribe", {
                 method: "POST",
                 body: formData
               });
 
-              if (res.ok) {
-                const data = await res.json();
-                recognizedText = (data.text || "").trim();
-                serverlessSucceeded = true;
-              } else if (res.status !== 404) {
-                const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.error || `Server error (${res.status})`);
+              const data = await res.json();
+              if (!res.ok) {
+                throw new Error(data.error || `Serverless Error (${res.status})`);
               }
-            } catch (serverlessErr) {
-              if (serverlessErr.message && !serverlessErr.message.includes("Failed to fetch") && !serverlessErr.message.includes("404")) {
-                throw serverlessErr;
-              }
-            }
-
-            // Strategy 2: Local VS Code Live Server Direct Groq Call
-            if (!serverlessSucceeded) {
+              recognizedText = (data.text || "").trim();
+            } else {
+              // ── ON VS CODE LIVE SERVER (Local): Call Groq API directly using config.js ──
               const directKey = getLocalApiKey();
               if (!directKey) {
-                const entered = prompt("Local Live Server detected: Please enter your Groq API Key (starts with gsk_):");
+                const entered = prompt("Local Live Server: Please enter your Groq API Key (starts with gsk_):");
                 if (!entered) throw new Error("No API key provided for local testing.");
                 localStorage.setItem("GROQ_API_KEY", entered.trim());
               }
@@ -603,7 +592,6 @@
               formData.append("model", "whisper-large-v3");
               formData.append("temperature", "0.0");
 
-              // Prompt priming to avoid YouTube outro hallucinations
               const promptText = currentLanguage === "id"
                 ? "Transkripsi percakapan sehari-hari bahasa Indonesia. Jangan menambahkan teks penutup atau terima kasih jika tidak diucapkan."
                 : "Direct speech dictation transcript. Do not hallucinate outro text.";
@@ -619,11 +607,10 @@
 
               const data = await response.json();
               if (!response.ok) {
-                throw new Error(data.error?.message || "Transcription failed");
+                throw new Error(data.error?.message || "Direct Groq API failed");
               }
               recognizedText = (data.text || "").trim();
 
-              // Clean hallucinations in local mode too
               const isHallucination = HALLUCINATION_PATTERNS.some((pattern) => pattern.test(recognizedText));
               if (isHallucination) {
                 recognizedText = "";
