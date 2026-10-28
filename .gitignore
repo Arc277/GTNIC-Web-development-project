@@ -1,7 +1,8 @@
-# Environment variables
+# API Keys and Config
 .env
 *.env
 voice-server/.env
+config.js
 
 # Dependencies
 node_modules/

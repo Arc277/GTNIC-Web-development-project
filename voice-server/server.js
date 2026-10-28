@@ -33,9 +33,6 @@ const groq = new Groq({
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from 'public' directory
-app.use(express.static(path.join(__dirname, "public")));
-
 // Transcription API endpoint
 app.post("/api/transcribe", upload.single("audio"), async (req, res) => {
   if (!req.file) {
@@ -59,7 +56,6 @@ app.post("/api/transcribe", upload.single("audio"), async (req, res) => {
       temperature: 0.0,
     });
 
-    // Delete temp file after successful transcription
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
@@ -68,7 +64,6 @@ app.post("/api/transcribe", upload.single("audio"), async (req, res) => {
   } catch (error) {
     console.error("Transcription error:", error);
 
-    // Clean up temp file on error
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
@@ -79,7 +74,21 @@ app.post("/api/transcribe", upload.single("audio"), async (req, res) => {
   }
 });
 
+// Ping endpoint for frontend to check if backend is alive
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", engine: "groq-whisper" });
+});
+
+// Serve main project directory (index.html, voice.html, style.css)
+const projectRoot = path.join(__dirname, "..");
+app.use(express.static(projectRoot, {
+  dotfiles: "deny" // Prevents exposing .env, .git, etc.
+}));
+
 app.listen(port, () => {
-  console.log(`\n🚀 Voice Server running at http://localhost:${port}`);
-  console.log(`Open http://localhost:${port} in Chrome, Firefox, Safari, or Edge!\n`);
+  console.log(`\n======================================================`);
+  console.log(`🚀 Voice Server running at: http://localhost:${port}`);
+  console.log(`🏠 Home:  http://localhost:${port}/index.html`);
+  console.log(`🎤 Voice: http://localhost:${port}/voice.html`);
+  console.log(`======================================================\n`);
 });

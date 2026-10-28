@@ -3,9 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Voice Input - Groq Whisper</title>
+  <title>Voice Input - Groq Whisper AI</title>
   <link rel="stylesheet" href="style.css">
   <style>
+    /* ── Header & Navigation ── */
+    header {
+      background-color: #1e293b;
+      color: #ffffff;
+      padding: 1rem 2rem;
+    }
+
+    nav {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    nav h2 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+
+    .back-btn {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .back-btn:hover {
+      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* ── Main Container ── */
     .voice-container {
       max-width: 650px;
       margin: 2.5rem auto;
@@ -14,13 +53,36 @@
     }
 
     .voice-container h1 {
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.4rem;
     }
 
     .subtitle {
       color: #64748b;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
       font-size: 0.95rem;
+    }
+
+    /* ── Status pill ── */
+    .mode-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.95rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      background-color: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .mode-pill span.dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #22c55e;
+      display: inline-block;
     }
 
     /* ── Language toggle ── */
@@ -36,7 +98,7 @@
     .lang-toggle button {
       background: transparent;
       border: none;
-      padding: 0.45rem 1.1rem;
+      padding: 0.45rem 1.15rem;
       font-size: 0.85rem;
       border-radius: 999px;
       cursor: pointer;
@@ -57,7 +119,7 @@
       align-items: center;
       justify-content: center;
       gap: 1.25rem;
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
     }
 
     #record-btn {
@@ -74,6 +136,7 @@
       justify-content: center;
       box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
       transition: all 0.2s ease;
+      user-select: none;
     }
 
     #record-btn:hover {
@@ -93,7 +156,7 @@
       100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
     }
 
-    #type-btn {
+    #type-btn, #key-settings-btn {
       width: 50px;
       height: 50px;
       border-radius: 50%;
@@ -108,7 +171,7 @@
       transition: all 0.2s;
     }
 
-    #type-btn:hover {
+    #type-btn:hover, #key-settings-btn:hover {
       border-color: #2563eb;
       color: #2563eb;
       transform: scale(1.05);
@@ -158,7 +221,6 @@
       min-height: 70px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.04);
       margin-bottom: 1.5rem;
-      position: relative;
     }
 
     .output-box h3 {
@@ -174,25 +236,6 @@
       color: #0f172a;
       word-break: break-word;
       line-height: 1.5;
-    }
-
-    /* ── Server status banner ── */
-    .server-banner {
-      background-color: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
-      margin-bottom: 1.5rem;
-      font-size: 0.85rem;
-      color: #1e40af;
-      text-align: left;
-    }
-
-    .server-banner code {
-      background-color: #dbeafe;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 600;
     }
 
     /* ── History ── */
@@ -225,10 +268,14 @@
       border-radius: 4px;
       margin-left: 0.5rem;
       font-weight: 600;
+      background: #dcfce7;
+      color: #166534;
     }
 
-    .badge-voice { background: #dbeafe; color: #1e40af; }
-    .badge-typed { background: #fef3c7; color: #92400e; }
+    .badge-typed {
+      background: #f1f5f9;
+      color: #475569;
+    }
 
     .timestamp {
       font-size: 0.75rem;
@@ -243,59 +290,51 @@
       font-size: 0.85rem;
       padding: 0.4rem 0.8rem;
       margin-top: 0.5rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
     }
 
     #clear-history-btn:hover {
       background: #cbd5e1;
     }
-
-    nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    nav a {
-      color: #94a3b8;
-      text-decoration: none;
-      font-size: 0.95rem;
-      transition: color 0.2s;
-    }
-
-    nav a:hover {
-      color: #ffffff;
-    }
   </style>
+  <script src="config.js" onerror="console.log('Running in production mode')"></script>
 </head>
 <body>
   <header>
     <nav>
-      <h2>Hackathon App</h2>
-      <a href="index.html">&larr; Back to Home</a>
+      <h2>My App</h2>
+      <a href="index.html" class="back-btn">&larr; Back to Home</a>
     </nav>
   </header>
 
   <main class="voice-container">
     <h1>🎙️ Voice Input</h1>
-    <p class="subtitle">Powered by Whisper API &bull; Works in Chrome, Firefox, Safari & Mobile</p>
+    <p class="subtitle">Powered by Groq Whisper AI &bull; Enhanced Indonesian &amp; English</p>
 
-    <div class="server-banner" id="server-banner">
-      💡 <strong>Note:</strong> Voice processing requires your local backend running. Run <code>node server.js</code> inside the <code>voice-server</code> folder!
+    <!-- Mode Badge -->
+    <div class="mode-pill">
+      <span class="dot"></span>
+      <span id="mode-badge-text">Groq Whisper AI Active</span>
     </div>
 
     <!-- Language Selector -->
-    <div class="lang-toggle">
-      <button id="lang-id" class="active">🇮🇩 Indonesian</button>
-      <button id="lang-en">🇬🇧 English</button>
+    <div>
+      <div class="lang-toggle">
+        <button id="lang-id" class="active">🇮🇩 Indonesian</button>
+        <button id="lang-en">🇬🇧 English</button>
+      </div>
     </div>
 
-    <!-- Actions -->
+    <!-- Main Buttons -->
     <div class="btn-group">
       <button id="record-btn" title="Click to speak">🎙️</button>
       <button id="type-btn" title="Type text instead">⌨️</button>
+      <button id="key-settings-btn" title="Manage API Key (Development)">🔑</button>
     </div>
 
-    <div id="status">Click microphone to record</div>
+    <div id="status">Click the microphone to start speaking</div>
 
     <!-- Text Drawer -->
     <div id="text-drawer">
@@ -318,40 +357,66 @@
   </main>
 
   <script>
-    // Automatically detect backend port: if opened from Live Server (5500), connect to port 3000
-    const BACKEND_URL = window.location.port === "3000"
-      ? "/api/transcribe"
-      : "http://localhost:3000/api/transcribe";
+    // Known Whisper silence hallucination patterns to filter out
+    const HALLUCINATION_PATTERNS = [
+      /^terima kasih[\s\.\!\?]*$/i,
+      /^terimakasih[\s\.\!\?]*$/i,
+      /^terima kasih banyak[\s\.\!\?]*$/i,
+      /^terima kasih telah menonton[\s\.\!\?]*$/i,
+      /^terima kasih sudah menonton.*$/i,
+      /^thank you[\s\.\!\?]*$/i,
+      /^thank you very much[\s\.\!\?]*$/i,
+      /^thanks for watching.*$/i,
+      /^subtitles by.*$/i,
+      /^\.+$/
+    ];
 
-    const recordBtn = document.getElementById("record-btn");
-    const typeBtn = document.getElementById("type-btn");
-    const statusEl = document.getElementById("status");
-    const outputText = document.getElementById("output-text");
-    const textDrawer = document.getElementById("text-drawer");
-    const typeInput = document.getElementById("type-input");
-    const submitTypeBtn = document.getElementById("submit-type-btn");
-    const historySection = document.getElementById("history-section");
-    const historyList = document.getElementById("history-list");
+    let isServerlessAvailable = false;
+    const modeBadgeText = document.getElementById("mode-badge-text");
+    const keySettingsBtn = document.getElementById("key-settings-btn");
+
+    async function checkServerlessBackend() {
+      try {
+        const res = await fetch("/api/transcribe", { method: "HEAD" });
+        if (res.status !== 404) {
+          isServerlessAvailable = true;
+          modeBadgeText.textContent = "Groq Whisper AI (Vercel Cloud)";
+          keySettingsBtn.style.display = "none";
+        }
+      } catch (err) {
+        isServerlessAvailable = false;
+      }
+    }
+    checkServerlessBackend();
+
+    function getLocalApiKey() {
+      if (typeof CONFIG !== "undefined" && CONFIG.GROQ_API_KEY && !CONFIG.GROQ_API_KEY.includes("your_groq")) {
+        return CONFIG.GROQ_API_KEY;
+      }
+      return localStorage.getItem("GROQ_API_KEY") || "";
+    }
+
+    const recordBtn       = document.getElementById("record-btn");
+    const typeBtn         = document.getElementById("type-btn");
+    const statusEl        = document.getElementById("status");
+    const outputText      = document.getElementById("output-text");
+    const textDrawer      = document.getElementById("text-drawer");
+    const typeInput       = document.getElementById("type-input");
+    const submitTypeBtn   = document.getElementById("submit-type-btn");
+    const historySection  = document.getElementById("history-section");
+    const historyList     = document.getElementById("history-list");
     const clearHistoryBtn = document.getElementById("clear-history-btn");
-    const langIdBtn = document.getElementById("lang-id");
-    const langEnBtn = document.getElementById("lang-en");
-    const serverBanner = document.getElementById("server-banner");
+    const langIdBtn       = document.getElementById("lang-id");
+    const langEnBtn       = document.getElementById("lang-en");
 
-    let currentLanguage = "id"; // Default Indonesian
+    let currentLanguage = "id";
+    let isRecording = false;
     let mediaRecorder = null;
     let audioChunks = [];
-    let isRecording = false;
+    let audioStream = null;
+    let recordStartTime = 0;
 
-    // Check backend connection quietly
-    fetch("http://localhost:3000/", { method: "HEAD", mode: "no-cors" })
-      .then(() => {
-        serverBanner.style.display = "none"; // Server is up!
-      })
-      .catch(() => {
-        // Keep banner visible as a reminder
-      });
-
-    // Language switch
+    // ── Language Toggle ──
     langIdBtn.addEventListener("click", () => {
       currentLanguage = "id";
       langIdBtn.classList.add("active");
@@ -366,7 +431,7 @@
       typeInput.placeholder = "Type words or phrases...";
     });
 
-    // Toggle Type Box
+    // ── Toggle Type Box ──
     typeBtn.addEventListener("click", () => {
       textDrawer.classList.toggle("open");
       if (textDrawer.classList.contains("open")) {
@@ -374,20 +439,32 @@
       }
     });
 
-    function addHistory(text, type) {
-      if (!text) return;
+    // ── Key Settings Modal (Local Dev) ──
+    keySettingsBtn.addEventListener("click", () => {
+      const current = getLocalApiKey();
+      const entered = prompt("Enter your Groq API Key for local development (starts with gsk_):", current);
+      if (entered !== null) {
+        localStorage.setItem("GROQ_API_KEY", entered.trim());
+        alert("API Key saved for local development!");
+      }
+    });
+
+    // ── Add to History ──
+    function addHistory(text, isTyped = false) {
+      if (!text || text.trim() === "") return;
       historySection.style.display = "block";
       const item = document.createElement("div");
       item.className = "history-item";
 
       const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      const badgeClass = type === "voice" ? "badge-voice" : "badge-typed";
-      const badgeText = type === "voice" ? "🎙️ voice" : "⌨️ typed";
+      const badgeHtml = isTyped
+        ? '<span class="badge badge-typed">⌨️ Typed</span>'
+        : '<span class="badge">🤖 Groq Whisper</span>';
 
       item.innerHTML = `
         <div>
           <span>${text}</span>
-          <span class="badge ${badgeClass}">${badgeText}</span>
+          ${badgeHtml}
         </div>
         <span class="timestamp">${time}</span>
       `;
@@ -398,7 +475,7 @@
       const text = typeInput.value.trim();
       if (!text) return;
       outputText.textContent = text;
-      addHistory(text, "typed");
+      addHistory(text, true);
       typeInput.value = "";
     }
 
@@ -412,7 +489,7 @@
       historySection.style.display = "none";
     });
 
-    // ── Universal Cross-Browser Audio Capture ──
+    // ── Audio Capture with Noise Suppression & Hallucination Filter ──
     recordBtn.addEventListener("click", async () => {
       if (isRecording) {
         if (mediaRecorder && mediaRecorder.state !== "inactive") {
@@ -422,14 +499,20 @@
       }
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert("Microphone not supported on this device/browser.");
+        alert("Your browser does not support microphone audio capture.");
         return;
       }
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // High quality speech capture: enable browser noise suppression & auto gain
+        audioStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
 
-        // Auto-select MIME format supported by the current browser
         const supportedTypes = [
           "audio/webm;codecs=opus",
           "audio/webm",
@@ -446,23 +529,30 @@
           }
         }
 
-        mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+        mediaRecorder = mimeType ? new MediaRecorder(audioStream, { mimeType }) : new MediaRecorder(audioStream);
         audioChunks = [];
 
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data && event.data.size > 0) {
-            audioChunks.push(event.data);
-          }
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) audioChunks.push(e.data);
         };
 
         mediaRecorder.onstop = async () => {
           isRecording = false;
           recordBtn.classList.remove("recording");
           recordBtn.textContent = "🎙️";
-          statusEl.textContent = "⏳ Transcribing audio with Groq Whisper...";
 
-          // Release mic hardware
-          stream.getTracks().forEach((track) => track.stop());
+          const durationMs = Date.now() - recordStartTime;
+          if (durationMs < 400) {
+            statusEl.textContent = "⚠️ Rekaman terlalu singkat. Silakan bicara sedikit lebih lama.";
+            if (audioStream) audioStream.getTracks().forEach((t) => t.stop());
+            return;
+          }
+
+          statusEl.textContent = "⏳ Memproses suara dengan Whisper AI...";
+
+          if (audioStream) {
+            audioStream.getTracks().forEach((track) => track.stop());
+          }
 
           const finalMime = mediaRecorder.mimeType || "audio/webm";
           const audioBlob = new Blob(audioChunks, { type: finalMime });
@@ -473,46 +563,96 @@
           else if (finalMime.includes("wav")) ext = "wav";
 
           const formData = new FormData();
-          formData.append("audio", audioBlob, `speech.${ext}`);
+          formData.append("file", audioBlob, `audio.${ext}`);
           formData.append("language", currentLanguage);
 
           try {
-            const res = await fetch(BACKEND_URL, {
-              method: "POST",
-              body: formData,
-            });
+            let recognizedText = "";
+            let serverlessSucceeded = false;
 
-            const data = await res.json();
-            if (!res.ok) {
-              throw new Error(data.error || "Transcription failed");
+            // Strategy 1: Vercel Cloud Serverless Function
+            try {
+              const res = await fetch("/api/transcribe", {
+                method: "POST",
+                body: formData
+              });
+
+              if (res.ok) {
+                const data = await res.json();
+                recognizedText = (data.text || "").trim();
+                serverlessSucceeded = true;
+              } else if (res.status !== 404) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || `Server error (${res.status})`);
+              }
+            } catch (serverlessErr) {
+              if (serverlessErr.message && !serverlessErr.message.includes("Failed to fetch") && !serverlessErr.message.includes("404")) {
+                throw serverlessErr;
+              }
             }
 
-            if (data.text && data.text.trim().length > 0) {
-              outputText.textContent = data.text;
-              addHistory(data.text, "voice");
-              statusEl.textContent = "✅ Transcribed successfully!";
+            // Strategy 2: Local VS Code Live Server Direct Groq Call
+            if (!serverlessSucceeded) {
+              const directKey = getLocalApiKey();
+              if (!directKey) {
+                const entered = prompt("Local Live Server detected: Please enter your Groq API Key (starts with gsk_):");
+                if (!entered) throw new Error("No API key provided for local testing.");
+                localStorage.setItem("GROQ_API_KEY", entered.trim());
+              }
+
+              formData.append("model", "whisper-large-v3");
+              formData.append("temperature", "0.0");
+
+              // Prompt priming to avoid YouTube outro hallucinations
+              const promptText = currentLanguage === "id"
+                ? "Transkripsi percakapan sehari-hari bahasa Indonesia. Jangan menambahkan teks penutup atau terima kasih jika tidak diucapkan."
+                : "Direct speech dictation transcript. Do not hallucinate outro text.";
+              formData.append("prompt", promptText);
+
+              const response = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${getLocalApiKey()}`
+                },
+                body: formData
+              });
+
+              const data = await response.json();
+              if (!response.ok) {
+                throw new Error(data.error?.message || "Transcription failed");
+              }
+              recognizedText = (data.text || "").trim();
+
+              // Clean hallucinations in local mode too
+              const isHallucination = HALLUCINATION_PATTERNS.some((pattern) => pattern.test(recognizedText));
+              if (isHallucination) {
+                recognizedText = "";
+              }
+            }
+
+            if (recognizedText && recognizedText.length > 0) {
+              outputText.textContent = recognizedText;
+              addHistory(recognizedText);
+              statusEl.textContent = "✅ Transkripsi berhasil!";
             } else {
-              outputText.textContent = "(No speech detected)";
-              statusEl.textContent = "No speech detected. Try speaking closer to the mic.";
+              outputText.textContent = "(Tidak ada ucapan terdeteksi)";
+              statusEl.textContent = "Suara kurang terdengar jelas. Coba bicara lebih dekat ke mikrofon.";
             }
           } catch (err) {
             console.error(err);
-            if (err.message.includes("Failed to fetch") || err.message.includes("NetworkError")) {
-              statusEl.textContent = "⚠️ Cannot connect to backend server. Make sure `node server.js` is running on port 3000!";
-            } else {
-              statusEl.textContent = `⚠️ Error: ${err.message}`;
-            }
+            statusEl.textContent = `⚠️ Error: ${err.message}`;
           }
         };
 
+        recordStartTime = Date.now();
         mediaRecorder.start();
         isRecording = true;
         recordBtn.classList.add("recording");
         recordBtn.textContent = "⏹️";
-        statusEl.textContent = "🔴 Recording... Click the red stop button when done";
+        statusEl.textContent = "🔴 Merekam... Klik tombol merah saat selesai bicara";
       } catch (err) {
-        console.error("Mic error:", err);
-        statusEl.textContent = "⚠️ Microphone permission denied or device not found.";
+        console.error(err);
+        statusEl.textContent = "⚠️ Izin mikrofon ditolak atau perangkat tidak ditemukan.";
       }
     });
   </script>
